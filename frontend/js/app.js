@@ -1,3 +1,8 @@
+// alert("This is a message!");
+
+const URL_API_ADDRESS = 'http://dr-vecserver.ddns.net';
+const URL_API_PORT = '30555';
+
 // ==================== FUNÇÃO PARA CARREGAR HTML EXTERNO ====================
 async function loadPage(page) {
   const app = document.getElementById('app');
@@ -32,7 +37,7 @@ function initializePageEvents(page) {
   }
   
   if (page === 'register') {
-    const form = document.getElementById('registerForm');
+    const form = document.getElementById('userRegistrationForm');
     if (form) form.addEventListener('submit', handleRegister);
   }
   
@@ -40,7 +45,9 @@ function initializePageEvents(page) {
 }
 
 // ==================== CONFIGURAÇÃO ====================
-const API_URL = 'http://localhost:30555';   // sua porta
+// const API_URL = 'http://localhost:30555';   // sua porta
+const API_URL = URL_API_ADDRESS + ':' + URL_API_PORT;   // sua porta
+// const API_URL = ''; // Era para funcionar com qualquer url, não deu certo
 
 let currentUser = null;
 
@@ -84,7 +91,7 @@ function renderRegister() {
     </div>
   `;
 
-  document.getElementById('registerForm').addEventListener('submit', handleRegister);
+  document.getElementById('userRegistrationForm').addEventListener('submit', handleRegister);
 }
 
 function renderDashboard() {
@@ -155,7 +162,7 @@ async function handleLogin(e) {
       errorDiv.textContent = '';
 
       try {
-        const response = await fetch('http://localhost:30555/auth/login', {
+        const response = await fetch(API_URL + '/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
@@ -198,7 +205,7 @@ if (userRegistrationForm) {
     errorDiv.textContent = '';
 
     try {
-      const response = await fetch('http://localhost:30555/register', {
+      const response = await fetch(API_URL + '/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password }),
@@ -206,7 +213,8 @@ if (userRegistrationForm) {
       });
 
       if (response.ok) {
-        window.location.href = 'dashboard.html';
+        // window.location.href = 'dashboard.html';
+          navigateTo('dashboard');
       } else {
         const data = await response.json().catch(() => ({}));
         errorDiv.textContent = data.message || 'Erro ao cadastrar conta.';
@@ -225,7 +233,7 @@ if (userRegistrationForm) {
 //   const loading = document.getElementById('loading');
 //   const mainContent = document.getElementById('mainContent');
 //   try {
-//     const res = await fetch('http://localhost:30555/auth/me', {
+//     const res = await fetch(API_URL + '/auth/me', {
 //       method: 'GET',
 //       credentials: 'include'
 //     });
@@ -243,9 +251,16 @@ if (userRegistrationForm) {
 //   }
 // }
 async function checkAuth() {
+  // Não verifica em páginas públicas
+  const currentPath = window.location.pathname;
+  if (currentPath === '/login' || currentPath === '/register') {
+    return; // sai sem fazer nada
+  }
+
   try {
     // const res = await fetch(`${API_URL}/auth/me`, {
     const res = await fetch(API_URL + '/auth/me', {
+    // const res = await fetch('/auth/me', { // Era para funcionar com qualquer url, não deu certo
       credentials: 'include'
     });
 
@@ -263,7 +278,7 @@ async function checkAuth() {
 // ==================== LOGOUT ====================
 // async function logout() {
 //   try {
-//     await fetch('http://localhost:30555/auth/logout', {
+//     await fetch(API_URL + '/auth/logout', {
 //       method: 'POST',
 //       credentials: 'include'
 //     });
@@ -276,6 +291,7 @@ async function checkAuth() {
 async function logout() {
   // await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
   await fetch(API_URL + '/auth/logout', { method: 'POST', credentials: 'include' });
+  // await fetch('/auth/logout', { method: 'POST', credentials: 'include' }); // Era para funcionar com qualquer url, não deu certo
   currentUser = null;
   navigateTo('login');
 }
@@ -305,11 +321,12 @@ document.addEventListener('DOMContentLoaded', () => {
   else if (path === '/register') {
     loadPage('register');
   } 
-  else if (path === '/login' || path === '/') {
+  else if (path === '/login') {
     loadPage('login');
   } 
   else {
     // Qualquer outra URL → vai para login
-    navigateTo('login');
+    // navigateTo('login');
+    checkAuth();
   }
 });
